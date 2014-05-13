@@ -1,0 +1,50 @@
+body {
+  padding-top: 50px;
+}
+
+.top-menu, .workspace, .preview {
+    width: 100%;
+    display: inline-block;
+}
+
+.top-menu > div {
+    width: 49%;
+    float: left;
+}
+
+.settings {
+    height: 150px;
+    margin-left: 10px;
+}
+
+.workspace {
+    margin-top: 20px;
+}
+
+.workspace > div {
+    float: left;
+}
+
+#banner {
+    outline: 1px gray solid;
+    margin-left: 10px;
+    position: relative;
+}
+
+.background {
+    position: absolute;
+}
+
+.text-object {
+    border: 1px silver solid;
+    display: inline-block;
+    cursor: move;
+}
+
+.ui-selecting { background: #FECA40; }
+.ui-selected { background: #F39814; color: white; }
+.ui-resizable-helper { border: 1px dotted gray; }
+
+.preview > div {
+    float: left;
+}
