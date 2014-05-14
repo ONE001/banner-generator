@@ -3,42 +3,46 @@ body {
 }
 
 .top-menu, .workspace, .preview {
-    width: 100%;
-    display: inline-block;
+  width: 100%;
+  display: inline-block;
 }
 
 .top-menu > div {
-    width: 49%;
-    float: left;
+  width: 49%;
+  float: left;
 }
 
 .settings {
-    height: 150px;
-    margin-left: 10px;
+  display: none;
+  margin-left: 10px;
 }
 
 .workspace {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .workspace > div {
-    float: left;
+  float: left;
 }
 
 #banner {
-    outline: 1px gray solid;
-    margin-left: 10px;
-    position: relative;
+  outline: 1px gray solid;
+  margin-left: 10px;
+  position: relative;
 }
 
 .background {
-    position: absolute;
+  position: absolute;
 }
 
 .text-object {
-    border: 1px silver solid;
-    display: inline-block;
-    cursor: move;
+  border: 1px silver solid;
+  display: inline-block;
+  cursor: move;
+}
+
+.activated {
+  border: 2px blue dotted;
 }
 
 .ui-selecting { background: #FECA40; }
@@ -46,5 +50,5 @@ body {
 .ui-resizable-helper { border: 1px dotted gray; }
 
 .preview > div {
-    float: left;
+  float: left;
 }
