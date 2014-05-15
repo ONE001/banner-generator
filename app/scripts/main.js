@@ -1,59 +1,196 @@
-$(function() {
-  //$.event.props.push('touches', 'targetTouches', 'changedTouches');
+(function($){
 
-  function BannerObject($banner) {
-    var that = this;
-    this.minWidth = 200;
-    this.minHeight = 150;
-    this.maxWidth = 1000;
-    this.maxHeight = 500;
-    this.currentWidth = 700;
-    this.currentHeight = 400;
+  jQuery.fn.generateBanner = function(options) {
+    var
+      that = this,
+      build = function() {
+        var obj = $('<div>'),
+            banner = new BannerObject(),
+            toolbar = new ToolbarObject(),
+            properties = new PropertiesObject(),
+            preview = new PreviewObject(),
+            sm = new StateMachine()
+        ;
 
-    this.$self = $banner;
-    this.$background = $('<img class=\'background\'/>');
+        banner.initResize();
 
-    this.$self.append(this.$background);
+        properties.onChange = function() {
+          sm.current().applyProperties();
+          preview.update(banner, sm.all());
+        };
 
-    this.setSize = function(width, height) {
-      // if (width > this.maxWidth) {
-      //   width = this.maxWidth;
-      // }
+        obj.append(toolbar.$self);
+        obj.append(banner.$self);
+        obj.append(properties.$self);
+        obj.append(preview.$self);
 
-      if (width < this.minWidth) {
-        width = this.minWidth;
+        // добавление на баннер текста
+        toolbar.$self.on('click', '.banner-text-button', function() {
+          var
+            text = new TextObject(),
+            active = function() {
+              text.active();
+              properties.fill(text.properties);
+            }
+          ;
+
+          sm.add(text);
+
+          text.$self.on('mousedown', active);
+          text.$self.on('touchstart', active);
+
+          banner.put(text);
+          preview.update(banner, sm.all());
+
+          return false;
+        });
+
+        $(this).replaceWith(obj);
+
+        return {
+          setBackground: function(src) {
+            banner.setBackground(src);
+          },
+        };
       }
+    ;
 
-      // if (height > this.maxHeight) {
-      //   height = this.maxHeight;
-      // }
+    options = $.extend({
+      minWidth: 200,
+      minHeight: 150,
+      maxWidth: 1000,
+      maxHeight: 750,
+      width: 700,
+      height: 400,
+    }, options);
 
-      if (height < this.minHeight) {
-        height = this.minHeight;
-      }
+    // ---------------------------------
 
-      this.$self.width(width);
-      this.$self.height(height);
+    function StateMachine() {};
+    StateMachine.prototype.add = function(element) {
+        var sm = this, calls = this._callbacks || (this._callbacks = []);
+
+        calls.push(element);
+
+        element.active = function() {
+            var that = this;
+            $.each(calls, function() {
+                if (this === that) {
+                    this.activate();
+
+                    sm.current = function() {
+                      return that;
+                    };
+                } else {
+                    this.deactivate();
+                }
+            });
+        };
     };
 
-    this.setSize(this.currentWidth, this.currentHeight);
-
-    this.initResize = function() {
-      this.$self.resizable({
-        animate: true,
-        //maxHeight: this.maxHeight,
-        //maxWidth: this.maxWidth,
-        minHeight: this.minHeight,
-        minWidth: this.minWidth,
-        stop: function(event, ui) {
-          that.currentWidth = ui.size.width;
-          that.currentHeight = ui.size.height;
-        },
-      });
+    StateMachine.prototype.all = function() {
+      return this._callbacks || [];
     };
 
-    this.$self.droppable({
-      drop : function(e, ui) {
+    // ---------------------------------
+
+    function ToolbarObject() {
+      this.$self = $('<div class=\'banner-toolbar\'></div>');
+      this.$$textButton = $('<a class=\'banner-text-button\'></a>');
+      this.$$textButton.text('Add text >');
+
+      this.$self.append(this.$$textButton);
+    };
+
+    // ---------------------------------
+
+    function BannerObject() {
+      var that = this;
+
+      this.$self = $('<div class=\'banner-workspace\'></div>');
+
+      this.$$workspace = $('<div></div>');
+      this.$$background = $('<img/>');
+
+      this.$$background.on('dragstart', function (event) { event.preventDefault(); } );
+
+      this.$self.append(this.$$workspace);
+      this.$$workspace.append(this.$$background);
+
+      this.setBackground = function(image) {
+        this.$$background.prop('src', image);
+
+        this.$$background.off('load').on('load', function() {
+          var $this = $(this);
+
+          that.setSize($this.width(), $this.height());
+
+          $this.css({
+            'position': 'absolute',
+            'width': '100%',
+            'height': '100%',
+          });
+        });
+      };
+
+      this.getBackground = function() {
+        return this.$$background.prop('src');
+      };
+
+      this.setSize = function(width, height) {
+        if (options.maxWidth && width > options.maxWidth) {
+          width = options.maxWidth;
+        }
+
+        if (options.minWidth && width < options.minWidth) {
+          width = options.minWidth;
+        }
+
+        if (options.maxHeight && height > options.maxHeight) {
+          height = options.maxHeight;
+        }
+
+        if (options.minHeight && height < options.minHeight) {
+          height = options.minHeight;
+        }
+
+        this.width = width;
+        this.height = height;
+
+        this.$$workspace.width(width);
+        this.$$workspace.height(height);
+      };
+
+      this.setSize(options.width, options.height);
+
+      this.initResize = function() {
+        params = {};
+
+        if (options.maxHeight) {
+          params.maxHeight = options.maxHeight;
+        }
+
+        if (options.minHeight) {
+          params.minHeight = options.minHeight;
+        }
+
+        if (options.minWidth) {
+          params.minWidth = options.minWidth;
+        }
+
+        if (options.maxWidth) {
+          params.maxWidth = options.maxWidth;
+        }
+
+        params.stop = function(event, ui) {
+          that.setSize(ui.size.width, ui.size.height);
+        };
+
+        this.$self.resizable(params);
+      };
+
+      this.$self.droppable({
+        drop : function(e, ui) {
           // var left = ui.offset.left,
           //     top = ui.offset.top,
           //     cur = ui.helper,
@@ -62,148 +199,191 @@ $(function() {
 
           // results.addAttr(wh, cur_id, 'left', left - results.get_droppable().offset().left - results.constants.get('BORDER_SIZE'));
           // results.addAttr(wh, cur_id, 'top', top - results.get_droppable().offset().top - results.constants.get('BORDER_SIZE'));
-      }
-    });
+        }
+      });
 
-    this.setBackground = function(image) {
-      this.$background.prop('src', image);
+      this.put = function(component) {
+        this.$$workspace.append(component.$self);
+      };
+    };
 
-      this.$background.off('load').on('load', function() {
-        var $this = $(this);
-        console.log($this.width());
+    // ---------------------------------
 
-        that.setSize($this.width(), $this.height());
+    function CommonObject() {};
 
-        $this.css({
-          'width': '100%',
-          'height': '100%',
-        });
+    CommonObject.prototype.applyProperties = function() {
+      var that = this;
+
+      $.each(this.properties, function(prop, val) {
+        if ($.isFunction(val.method)) {
+          $.proxy(val.method, that)(prop, val);
+        } else {
+          that.$$text.css(prop, val.value);
+        }
       });
     };
 
-    this.getBackground = function() {
-
+    CommonObject.prototype.activate = function() {
+      this.$self.addClass('activated');
     };
 
-    this.put = function(component) {
-      this.$self.append(component.$self);
+    CommonObject.prototype.deactivate = function() {
+      this.$self.removeClass('activated');
     };
+
+    // ---------------------------------
+
+    function TextObject() {
+      var that = this;
+      this.$self = $('<div class=\'banner-text-object\'></div>');
+      this.$$text = $('<span></span>');
+
+      this.properties = $.extend(true, {}, this.properties);
+      this.applyProperties();
+      this.$self.append(this.$$text);
+      this.$self.draggable({
+        containment: 'parent',
+      });
+    };
+
+    TextObject.prototype = Object.create(CommonObject.prototype);
+    TextObject.prototype.constructor = TextObject;
+
+    // default values for properties
+    TextObject.prototype.properties = $.extend({
+      'text': {
+        'label': 'Text',
+        'type': 'textarea',
+        'value': 'Text',
+        'method': function(prop, val) {
+          this.$$text.text(val.value);
+        },
+      },
+      'color': {
+        'label': 'Color',
+        'type': 'color',
+        'value': '#000000',
+      },
+      'font-size': {
+        'label': 'Size',
+        'type': 'number',
+        'value': 14,
+        'method': function(prop, val) {
+          this.$$text.css(prop, val.value + 'px');
+        },
+      },
+      'font-family': {
+        'label': 'Font',
+        'type': 'text',
+        'value': 'Tahoma, Arial',
+      },
+    }, options.properties || {});
+
+    TextObject.prototype.preview = function() {
+      // var
+      //   $div = $('<div></div>'),
+      //   $span = $('<span></span>')
+      // ;
+
+      //$div.append($span);
+
+      // $div.css({
+      //   'position': 'absolute',
+      //   'left': this.$self.css('left'),
+      //   'top': this.$self.css('top'),
+      // });
+
+      return this.$self.clone();
+    };
+
+    // ---------------------------------
+
+    function PropertiesObject() {
+      var that = this;
+
+      this.$self = $('<div class=\'banner-properties\'></div>');
+
+      this.fill = function(properties) {
+        var
+          $properties = $('<form role=\'form\'></form>'),
+          $group, $field
+        ;
+
+        $.each(properties, function(prop, val) {
+          $group = $('<div class=\'form-group\'></div>');
+          $group.append('<label>' + (val.label || prop) + '</label>');
+
+          if (val.type === 'textarea') {
+            $field = $('<textarea rows=\'3\'>');
+          } else {
+            $field = $('<input type=\'' + (val.type || 'text') + '\'/>');
+          }
+
+          $field.addClass('form-control');
+          $field.data('prop', val);
+          $field.val(val.value);
+
+          $group.append($field);
+
+          $properties.append($group);
+        });
+
+        this.$self.html($properties);
+      };
+
+      this.$self.on('keyup change', '.form-control', function() {
+        var $this = $(this);
+
+        if (!$this.data('prop')) {
+          return;
+        }
+
+        $this.data('prop').value = $this.val();
+
+        if ($.isFunction(that.onChange)) {
+          that.onChange();
+        }
+      });
+    };
+
+    // ---------------------------------
+
+    function PreviewObject() {
+      var that = this;
+      this.$self = $('<div class=\'banner-preview\'></div>');
+      this.$$preview = $('<div></div>');
+      this.$$background = $('<img/>');
+      this.$$code = $('<div></div>');
+
+      this.$$background.css('position', 'absolute');
+
+      this.$$preview.css('position', 'relative');
+      this.$$background.on('dragstart', function (event) { event.preventDefault(); } );
+
+      this.update = function(banner, textObjects) {
+        this.$$preview.empty();
+
+        this.$$preview.append(this.$$background);
+        this.$$preview.width(banner.width);
+        this.$$preview.height(banner.height);
+        this.$$background.prop('src', banner.getBackground());
+
+        $.each(textObjects, function() {
+          var $obj = this.preview();
+
+          $obj.attr('class', '');
+
+          that.$$preview.append($obj);
+        });
+
+        // preview code
+      };
+
+      this.$self.append(this.$$preview);
+      this.$self.append(this.$$code);
+    };
+
+    return $.proxy(build, this[0])();
   };
 
-  // ====================================================================================
-
-  function TextObject() {
-  	var that = this;
-    this.$self = $('<div class=\'text-object\'></div>');
-    this.$text = $('<span></span>');
-
-    this.$self.data('object', this);
-
-    this.properties = {
-    	'text': 'Text',
-    	'background-color': '#ffffff',
-    	'color': '#000000',
-    	'size': 14,
-    	'font': 'Tahoma, Arial',
-    	'padding': '3px',
-    	'text-shadow': '0 0 0 black',
-    	'box-shadow': '0 0 0 black',
-    };
-
-    this.applyProperties = function() {
-	    this.$text.text(this.properties.text);
-	    this.$self.css('background-color', this.properties['background-color']);
-	    this.$text.css({
-	    	'color': this.properties.color,
-		  	'font-size': this.properties.size + 'px',
-		  	'font': this.properties.font,
-		  	'padding': this.properties.padding,
-		  	'text-shadow': this.properties['text-shadow'],
-		  	'box-shadow': this.properties['box-shadow'],
-	    });
-    };
-
-    this.applyProperties();
-
-    var activate = function() {
-    	var $this = $(this);
-
-    	deactivateAll();
-
-    	properties.show();
-
-    	fillProperties($this.data('object'));
-
-	   	$this.addClass('activated');
-    };
-
-    this.$self.on('mousedown', activate);
-    this.$self.on('touchstart', activate);
-
-    this.$self.append(this.$text);
-    this.$self.draggable({
-    	containment: "parent",
-    });
-  };
-
-  // ====================================================================================
-
-  var banner = new BannerObject($('#banner'));
-
-  banner.initResize();
-
-  var
-  	properties = $('.settings'),
-  	deactivateAll = function() {
-  		$('.activated').removeClass('activated');
-			properties.hide();
-  	},
-  	fillProperties = function(textObject) {
-  		$.each(textObject.properties, function(prop, val) {
-  			$('[data-prop=' + prop + ']', properties).val(val);
-  		});
-  	}
-	;
-
-	properties.on('keyup change', '[data-prop]', function() {
-		var $this = $(this),
-			textObject = $('.activated:first').data('object');
-
-			if (!textObject) {
-				return;
-			}
-
-			textObject.properties[$this.data('prop')] = $this.val();
-			textObject.applyProperties();
-	});
-
-  $('.add-text-block').on('click', function() {
-    var text = new TextObject();
-
-    banner.put(text);
-
-    return false;
-  });
-
-  $('#link-on-image').on('keyup', function() {
-    banner.setBackground($(this).val());
-  });
-
-  var readURL = function(input, onloadFunc) {
-    if (input.files && input.files[0]) {
-      var reader = new FileReader();
-
-      if ($.isFunction(onloadFunc)) {
-          reader.onload = onloadFunc;
-      }
-
-      reader.readAsDataURL(input.files[0]);
-    }
-  };
-
-  $('#upload-image').on('change', function() {
-    readURL(this, function(e) {
-      banner.setBackground(e.target.result);
-    });
-  });
-});
+})(jQuery);

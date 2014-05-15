@@ -2,7 +2,6 @@
   "name": "banner-generator",
   "private": true,
   "dependencies": {
-    "bootstrap": "*",
     "jquery": "*",
     "jquery-ui": "*"
   },
