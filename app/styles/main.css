@@ -1,4 +1,4 @@
-.banner-workspace, .banner-preview {
+.banner-workspace {
   outline: 1px gray solid;
   position: relative;
   display: inline-block;
@@ -26,8 +26,11 @@
 
 .banner-text-object {
   border: 1px silver solid;
-  display: inline-block;
   cursor: move;
+}
+
+.banner-text-object {
+  display: inline-block;
   position: absolute!important;
 }
 

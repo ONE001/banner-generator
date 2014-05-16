@@ -19,6 +19,34 @@
           preview.update(banner, sm.all());
         };
 
+        banner.onDrop = function() {
+          var
+            textObjects = sm.all(),
+            rightBorder, bottomBorder
+          ;
+
+          preview.update(banner, textObjects);
+
+          $.each(textObjects, function() {
+            rightBorder = parseInt(this.$self.css('left'), 10) + this.$self.width();
+            bottomBorder = parseInt(this.$self.css('top'), 10) + this.$self.height();
+
+            if (!banner.rightBorder || banner.rightBorder < rightBorder) {
+              banner.rightBorder = rightBorder;
+            }
+
+            if (!banner.bottomBorder || banner.bottomBorder < bottomBorder) {
+              banner.bottomBorder = bottomBorder;
+            }
+          });
+
+          console.log(banner.rightBorder, banner.bottomBorder);
+        };
+
+        banner.onResized = function() {
+          preview.update(banner, sm.all());
+        };
+
         obj.append(toolbar.$self);
         obj.append(banner.$self);
         obj.append(properties.$self);
@@ -184,22 +212,33 @@
 
         params.stop = function(event, ui) {
           that.setSize(ui.size.width, ui.size.height);
+
+          if ($.isFunction(that.onResized)) {
+            that.onResized();
+          }
         };
+
+        // params.start = function() {
+        //   var $this = $(this);
+
+        //   if (that.rightBorder) {
+        //     $this.resizable('option', 'minWidth', that.rightBorder);
+        //   }
+
+        //   if (that.bottomBorder) {
+        //     $this.resizable('option', 'minHeight', that.bottomBorder);
+        //   }
+        // };
 
         this.$self.resizable(params);
       };
 
       this.$self.droppable({
-        drop : function(e, ui) {
-          // var left = ui.offset.left,
-          //     top = ui.offset.top,
-          //     cur = ui.helper,
-          //     cur_id = cur.attr('id'),
-          //     wh = results.getWh(cur_id);
-
-          // results.addAttr(wh, cur_id, 'left', left - results.get_droppable().offset().left - results.constants.get('BORDER_SIZE'));
-          // results.addAttr(wh, cur_id, 'top', top - results.get_droppable().offset().top - results.constants.get('BORDER_SIZE'));
-        }
+        drop: function(e, ui) {
+          if ($.isFunction(that.onDrop)) {
+            that.onDrop();
+          }
+        },
       });
 
       this.put = function(component) {
@@ -231,6 +270,22 @@
       this.$self.removeClass('activated');
     };
 
+    CommonObject.prototype.preview = function() {
+      var $prevObject = this.$self.clone();
+
+      $prevObject.css({
+        'position': 'absolute',
+      });
+
+      $prevObject.children('span').css({
+        'display': 'inline-block',
+      });
+
+      $prevObject.attr('class', 'banner-preview-object');
+
+      return $prevObject;
+    };
+
     // ---------------------------------
 
     function TextObject() {
@@ -256,8 +311,22 @@
         'type': 'textarea',
         'value': 'Text',
         'method': function(prop, val) {
-          this.$$text.text(val.value);
+          val.value = val.value.replace(/\n/g, '<br\/>');
+          val.value = val.value.replace(/\s/g, '&nbsp');
+
+          this.$$text.html(val.value);
         },
+      },
+      'width': {
+        'label': 'Width',
+        'type': 'text',
+        'value': 'auto',
+      },
+      'text-align': {
+        'label': 'Horz Position',
+        'type': 'select',
+        'values': ['left', 'center', 'right', 'justify', 'start', 'end',],
+        'value': 0,
       },
       'color': {
         'label': 'Color',
@@ -279,23 +348,6 @@
       },
     }, options.properties || {});
 
-    TextObject.prototype.preview = function() {
-      // var
-      //   $div = $('<div></div>'),
-      //   $span = $('<span></span>')
-      // ;
-
-      //$div.append($span);
-
-      // $div.css({
-      //   'position': 'absolute',
-      //   'left': this.$self.css('left'),
-      //   'top': this.$self.css('top'),
-      // });
-
-      return this.$self.clone();
-    };
-
     // ---------------------------------
 
     function PropertiesObject() {
@@ -306,22 +358,39 @@
       this.fill = function(properties) {
         var
           $properties = $('<form role=\'form\'></form>'),
-          $group, $field
+          $group, $field,
+          options = ''
         ;
 
         $.each(properties, function(prop, val) {
           $group = $('<div class=\'form-group\'></div>');
           $group.append('<label>' + (val.label || prop) + '</label>');
 
-          if (val.type === 'textarea') {
-            $field = $('<textarea rows=\'3\'>');
+          if (val.type === 'select') {
+            $field = $('<select></select>');
+
+            $.each(val.values, function(i, v) {
+              if (i === val.value) {
+                options += '<option selected value=\'' + v + '\'>' + v + '</option>';
+              } else {
+                options += '<option value=\'' + v + '\'>' + v + '</option>';
+              }
+            });
+
+            $field.append(options);
           } else {
-            $field = $('<input type=\'' + (val.type || 'text') + '\'/>');
+            if (val.type === 'textarea') {
+              $field = $('<textarea rows=\'3\'>');
+              val.value = val.value.replace(/<(\/)?br(\/)?>/g,'\n');
+            } else {
+              $field = $('<input type=\'' + (val.type || 'text') + '\'/>');
+            }
+
+            $field.val(val.value);
           }
 
           $field.addClass('form-control');
           $field.data('prop', val);
-          $field.val(val.value);
 
           $group.append($field);
 
@@ -355,7 +424,16 @@
       this.$$background = $('<img/>');
       this.$$code = $('<div></div>');
 
-      this.$$background.css('position', 'absolute');
+      this.$self.css({
+        'position': 'relative',
+        'display': 'inline-block',
+      });
+
+      this.$$background.css({
+        'position': 'absolute',
+        'width': '100%',
+        'height': '100%',
+      });
 
       this.$$preview.css('position', 'relative');
       this.$$background.on('dragstart', function (event) { event.preventDefault(); } );
@@ -369,14 +447,10 @@
         this.$$background.prop('src', banner.getBackground());
 
         $.each(textObjects, function() {
-          var $obj = this.preview();
-
-          $obj.attr('class', '');
-
-          that.$$preview.append($obj);
+          that.$$preview.append(this.preview());
         });
 
-        // preview code
+        that.$$code.text($('<div>').append(this.$$preview.clone()).html());
       };
 
       this.$self.append(this.$$preview);
