@@ -79,6 +79,12 @@
           setBackground: function(src) {
             banner.setBackground(src);
           },
+          getHTML: function() {
+            return $('<div>').append(preview.$$preview.clone()).html();
+          },
+          getJSON: function() {
+
+          },
         };
       }
     ;
@@ -124,7 +130,7 @@
 
     function ToolbarObject() {
       this.$self = $('<div class=\'banner-toolbar\'></div>');
-      this.$$textButton = $('<a class=\'banner-text-button\'></a>');
+      this.$$textButton = $('<a class=\'banner-text-button btn\'></a>');
       this.$$textButton.text('Add text >');
 
       this.$self.append(this.$$textButton);
@@ -396,6 +402,12 @@
 
           $properties.append($group);
         });
+
+        var $removeButton = $('<a class=\'banner-remove-text btn\'></a>');
+
+        $removeButton.text('Remove');
+
+        $properties.append($removeButton);
 
         this.$self.html($properties);
       };
