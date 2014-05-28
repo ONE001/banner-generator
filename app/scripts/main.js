@@ -19,6 +19,13 @@
           preview.update(banner, sm.all());
         };
 
+        properties.onRemove = function() {
+          var currentObject = sm.current();
+          sm.removeByValue(currentObject);
+          currentObject.$self.remove();
+          preview.update(banner, sm.all());
+        };
+
         banner.onDrop = function() {
           var
             textObjects = sm.all(),
@@ -39,8 +46,6 @@
               banner.bottomBorder = bottomBorder;
             }
           });
-
-          console.log(banner.rightBorder, banner.bottomBorder);
         };
 
         banner.onResized = function() {
@@ -120,6 +125,22 @@
                 }
             });
         };
+    };
+
+    StateMachine.prototype.removeByNumber = function(from, to) {
+      var calls = this._callbacks || [],
+        rest = calls.slice((to || from) + 1 || calls.length);
+      calls.length = from < 0 ? calls.length + from : from;
+      return calls.push.apply(calls, rest);
+    };
+
+    StateMachine.prototype.removeByValue = function(el) {
+      var calls = this._callbacks || [];
+      for (var i = 0; i < calls.length; i+=1) {
+        if (calls[i] == el) {
+          return this.removeByNumber(i);
+        }
+      }
     };
 
     StateMachine.prototype.all = function() {
@@ -319,7 +340,6 @@
         'method': function(prop, val) {
           val.value = val.value.replace(/\n/g, '<br\/>');
           val.value = val.value.replace(/\s/g, '&nbsp');
-
           this.$$text.html(val.value);
         },
       },
@@ -406,6 +426,10 @@
         var $removeButton = $('<a class=\'banner-remove-text btn\'></a>');
 
         $removeButton.text('Remove');
+
+        $removeButton.on('click', function() {
+          that.onRemove();
+        });
 
         $properties.append($removeButton);
 
