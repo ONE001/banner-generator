@@ -10,7 +10,26 @@
             toolbar = new ToolbarObject(),
             properties = new PropertiesObject(),
             preview = new PreviewObject(),
-            sm = new StateMachine()
+            sm = new StateMachine(),
+
+            addTextObject = function() {
+              var
+                text = new TextObject(),
+                active = function() {
+                  text.active();
+                  properties.fill(text.properties);
+                }
+              ;
+
+              sm.add(text);
+
+              text.$self.on('mousedown', active);
+              text.$self.on('touchstart', active);
+
+              banner.put(text);
+
+              return text;
+            }
         ;
 
         banner.initResize();
@@ -60,20 +79,9 @@
 
         // добавление на баннер текста
         toolbar.$self.on('click', '.banner-text-button', function() {
-          var
-            text = new TextObject(),
-            active = function() {
-              text.active();
-              properties.fill(text.properties);
-            }
-          ;
 
-          sm.add(text);
+          addTextObject();
 
-          text.$self.on('mousedown', active);
-          text.$self.on('touchstart', active);
-
-          banner.put(text);
           preview.update(banner, sm.all());
 
           return false;
@@ -82,6 +90,13 @@
         $(this).replaceWith(obj);
 
         return {
+          clear: function() {
+            $.each(sm.all(), function() {
+              this.$self.remove();
+            });
+            sm.clear();
+            preview.update(banner, sm.all());
+          },
           setBackground: function(src) {
             banner.setBackground(src);
           },
@@ -89,7 +104,61 @@
             return $('<div>').append(preview.$$preview.clone()).html();
           },
           getJSON: function() {
+            var obj = {},
+              properties;
 
+            obj.background = {
+              src: banner.getBackground(),
+              width: banner.width,
+              height: banner.height,
+            };
+            obj.objects = [];
+
+            $.each(sm.all(), function() {
+              properties = {};
+
+              $.each(this.properties, function(k, v) {
+                if (v.values) {
+                  v = v.values[v.value];
+                } else {
+                  v = v.value;
+                }
+
+                properties[k] = v;
+              });
+
+              obj.objects.push({
+                properties: properties,
+                positions: {left: this.$self.css('left'), top: this.$self.css('top')}
+              });
+            });
+
+            return obj;
+          },
+          fill: function(obj) {
+            if (obj.background) {
+              if (obj.background.src) {
+                banner.setBackground(obj.background.src);
+              }
+
+              if (obj.background.width && obj.background.height) {
+                banner.setSize(obj.background.width, obj.background.height);
+              }
+            }
+
+            if (obj.objects) {
+              var text;
+
+              $.each(obj.objects, function() {
+                text = addTextObject();
+                text.fillProperties(this.properties);
+                text.applyProperties();
+                text.$self.css('left', this.positions.left);
+                text.$self.css('top', this.positions.top);
+              });
+            }
+
+            preview.update(banner, sm.all());
           },
         };
       }
@@ -146,6 +215,12 @@
 
     StateMachine.prototype.all = function() {
       return this._callbacks || [];
+    };
+
+    StateMachine.prototype.clear = function() {
+      if (this._callbacks) {
+        this._callbacks.length = 0;
+      }
     };
 
     // ---------------------------------
@@ -328,8 +403,36 @@
       });
     }
 
+
     TextObject.prototype = Object.create(CommonObject.prototype);
     TextObject.prototype.constructor = TextObject;
+
+    TextObject.prototype.fillProperties = function(properties) {
+      var that = this,
+        currentProp;
+
+      $.each(properties, function(i, v) {
+        currentProp = that.properties[i];
+
+        if (!currentProp) {
+          return;
+        }
+
+        if (currentProp.values) {
+          v = currentProp.values.indexOf(v);
+
+          if (v === -1) {
+            v = 0;
+          }
+        }
+
+        currentProp.value = v;
+
+        if (currentProp.method) {
+          $.proxy(currentProp.method, that)(i, currentProp);
+        }
+      });
+    };
 
     // default values for properties
     TextObject.prototype.properties = $.extend({
@@ -340,6 +443,7 @@
         'method': function(prop, val) {
           val.value = val.value.replace(/\n/g, '<br\/>');
           val.value = val.value.replace(/\s/g, '&nbsp');
+          val.value = val.value.replace(/&nbsp/g, ' ');
           this.$$text.html(val.value);
         },
       },

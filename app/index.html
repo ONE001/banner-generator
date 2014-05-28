@@ -65,6 +65,31 @@
         banner.setBackground('http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg');
 
         banner.getHTML();
+
+        setTimeout(function() {
+          //var json = banner.getJSON();
+
+          console.log(JSON.stringify(banner.getJSON()));
+
+          banner.clear();
+
+          //banner.fill(json);
+
+          banner.fill({
+            "background": {"src":"http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg","width":400,"height":400},
+            "objects": [
+              {
+                "properties": {"text":"Text 456     asd","width":"auto","text-align":"left","color":"#ffffff","font-size":24,"font-family":"Tahoma","padding":"13px","text-shadow":"0 0 3px red","box-shadow":"0 0 13px black"},
+                "positions": {"left": 200, "top": 30},
+              },
+              {
+                "properties": {"text":"Text 456","width":"auto","text-align":"left","color":"#000000","font-size":14,"font-family":"Tahoma, Arial","padding":"3px","text-shadow":"0 0 0 black","box-shadow":"0 0 0 black"},
+                "positions": {"left": 20, "top": 200},
+              },
+            ]
+          });
+
+        }, 5000);
       });
     </script>
   </body>
