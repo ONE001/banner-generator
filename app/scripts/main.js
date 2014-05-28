@@ -1,8 +1,9 @@
+'use strict';
+
 (function($){
 
   jQuery.fn.generateBanner = function(options) {
     var
-      that = this,
       build = function() {
         var obj = $('<div>'),
             banner = new BannerObject(),
@@ -105,26 +106,26 @@
 
     // ---------------------------------
 
-    function StateMachine() {};
+    function StateMachine() {}
     StateMachine.prototype.add = function(element) {
-        var sm = this, calls = this._callbacks || (this._callbacks = []);
+      var sm = this, calls = this._callbacks || (this._callbacks = []);
 
-        calls.push(element);
+      calls.push(element);
 
-        element.active = function() {
-            var that = this;
-            $.each(calls, function() {
-                if (this === that) {
-                    this.activate();
+      element.active = function() {
+        var that = this;
+        $.each(calls, function() {
+          if (this === that) {
+            this.activate();
 
-                    sm.current = function() {
-                      return that;
-                    };
-                } else {
-                    this.deactivate();
-                }
-            });
-        };
+            sm.current = function() {
+              return that;
+            };
+          } else {
+            this.deactivate();
+          }
+        });
+      };
     };
 
     StateMachine.prototype.removeByNumber = function(from, to) {
@@ -137,7 +138,7 @@
     StateMachine.prototype.removeByValue = function(el) {
       var calls = this._callbacks || [];
       for (var i = 0; i < calls.length; i+=1) {
-        if (calls[i] == el) {
+        if (calls[i] === el) {
           return this.removeByNumber(i);
         }
       }
@@ -155,7 +156,7 @@
       this.$$textButton.text('Add text >');
 
       this.$self.append(this.$$textButton);
-    };
+    }
 
     // ---------------------------------
 
@@ -219,7 +220,7 @@
       this.setSize(options.width, options.height);
 
       this.initResize = function() {
-        params = {};
+        var params = {};
 
         if (options.maxHeight) {
           params.maxHeight = options.maxHeight;
@@ -261,7 +262,7 @@
       };
 
       this.$self.droppable({
-        drop: function(e, ui) {
+        drop: function(/* e, ui */) {
           if ($.isFunction(that.onDrop)) {
             that.onDrop();
           }
@@ -271,11 +272,11 @@
       this.put = function(component) {
         this.$$workspace.append(component.$self);
       };
-    };
+    }
 
     // ---------------------------------
 
-    function CommonObject() {};
+    function CommonObject() {}
 
     CommonObject.prototype.applyProperties = function() {
       var that = this;
@@ -316,7 +317,6 @@
     // ---------------------------------
 
     function TextObject() {
-      var that = this;
       this.$self = $('<div class=\'banner-text-object\'></div>');
       this.$$text = $('<span></span>');
 
@@ -326,7 +326,7 @@
       this.$self.draggable({
         containment: 'parent',
       });
-    };
+    }
 
     TextObject.prototype = Object.create(CommonObject.prototype);
     TextObject.prototype.constructor = TextObject;
@@ -449,7 +449,7 @@
           that.onChange();
         }
       });
-    };
+    }
 
     // ---------------------------------
 
@@ -491,7 +491,7 @@
 
       this.$self.append(this.$$preview);
       this.$self.append(this.$$code);
-    };
+    }
 
     return $.proxy(build, this[0])();
   };
