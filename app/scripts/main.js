@@ -6,6 +6,7 @@
     var
       build = function() {
         var obj = $('<div>'),
+            $this = $(this),
             banner = new BannerObject(),
             toolbar = new ToolbarObject(),
             properties = new PropertiesObject(),
@@ -29,6 +30,83 @@
               banner.put(text);
 
               return text;
+            },
+
+            res = {
+              clear: function() {
+                $.each(sm.all(), function() {
+                  this.$self.remove();
+                });
+                sm.clear();
+                preview.update(banner, sm.all());
+              },
+              setBackground: function(src) {
+                banner.setBackground(src);
+              },
+              getHTML: function() {
+                return $('<div>').append(preview.$$preview.clone()).html();
+              },
+              getJSON: function() {
+                var obj = {},
+                  properties;
+
+                obj.background = {
+                  src: banner.getBackground(),
+                  width: banner.width,
+                  height: banner.height,
+                };
+                obj.objects = [];
+
+                $.each(sm.all(), function() {
+                  properties = {};
+
+                  $.each(this.properties, function(k, v) {
+                    if (v.values) {
+                      v = v.values[v.value];
+                    } else {
+                      v = v.value;
+                    }
+
+                    properties[k] = v;
+                  });
+
+                  obj.objects.push({
+                    properties: properties,
+                    positions: {left: this.$self.css('left'), top: this.$self.css('top')}
+                  });
+                });
+
+                return obj;
+              },
+              fill: function(obj) {
+                if (obj.background) {
+                  if (obj.background.src) {
+                    banner.setBackground(obj.background.src);
+                  }
+
+                  if (obj.background.width && obj.background.height) {
+                    banner.setSize(obj.background.width, obj.background.height);
+                  }
+                }
+
+                if (obj.objects) {
+                  var text;
+
+                  $.each(obj.objects, function() {
+                    text = addTextObject();
+                    text.fillProperties(this.properties);
+                    text.applyProperties();
+                    text.$self.css('left', this.positions.left);
+                    text.$self.css('top', this.positions.top);
+                  });
+                }
+
+                preview.update(banner, sm.all());
+              },
+            },
+
+            jsonInInput = function() {
+              $this.val(JSON.stringify(res.getJSON()));
             }
         ;
 
@@ -37,6 +115,7 @@
         properties.onChange = function() {
           sm.current().applyProperties();
           preview.update(banner, sm.all());
+          jsonInInput();
         };
 
         properties.onRemove = function() {
@@ -44,6 +123,7 @@
           sm.removeByValue(currentObject);
           currentObject.$self.remove();
           preview.update(banner, sm.all());
+          jsonInInput();
         };
 
         banner.onDrop = function() {
@@ -53,6 +133,7 @@
           ;
 
           preview.update(banner, textObjects);
+          jsonInInput();
 
           $.each(textObjects, function() {
             rightBorder = parseInt(this.$self.css('left'), 10) + this.$self.width();
@@ -70,6 +151,7 @@
 
         banner.onResized = function() {
           preview.update(banner, sm.all());
+          jsonInInput();
         };
 
         obj.append(toolbar.$self);
@@ -83,84 +165,19 @@
           addTextObject();
 
           preview.update(banner, sm.all());
+          jsonInInput();
 
           return false;
         });
 
-        $(this).replaceWith(obj);
+        $this.hide();
+        $this.after(obj);
+        
+        if ($this.val()) {
+          res.fill(JSON.parse($this.val()));
+        }
 
-        return {
-          clear: function() {
-            $.each(sm.all(), function() {
-              this.$self.remove();
-            });
-            sm.clear();
-            preview.update(banner, sm.all());
-          },
-          setBackground: function(src) {
-            banner.setBackground(src);
-          },
-          getHTML: function() {
-            return $('<div>').append(preview.$$preview.clone()).html();
-          },
-          getJSON: function() {
-            var obj = {},
-              properties;
-
-            obj.background = {
-              src: banner.getBackground(),
-              width: banner.width,
-              height: banner.height,
-            };
-            obj.objects = [];
-
-            $.each(sm.all(), function() {
-              properties = {};
-
-              $.each(this.properties, function(k, v) {
-                if (v.values) {
-                  v = v.values[v.value];
-                } else {
-                  v = v.value;
-                }
-
-                properties[k] = v;
-              });
-
-              obj.objects.push({
-                properties: properties,
-                positions: {left: this.$self.css('left'), top: this.$self.css('top')}
-              });
-            });
-
-            return obj;
-          },
-          fill: function(obj) {
-            if (obj.background) {
-              if (obj.background.src) {
-                banner.setBackground(obj.background.src);
-              }
-
-              if (obj.background.width && obj.background.height) {
-                banner.setSize(obj.background.width, obj.background.height);
-              }
-            }
-
-            if (obj.objects) {
-              var text;
-
-              $.each(obj.objects, function() {
-                text = addTextObject();
-                text.fillProperties(this.properties);
-                text.applyProperties();
-                text.$self.css('left', this.positions.left);
-                text.$self.css('top', this.positions.top);
-              });
-            }
-
-            preview.update(banner, sm.all());
-          },
-        };
+        return res;
       }
     ;
 
