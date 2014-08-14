@@ -18,7 +18,7 @@
 
     <div class="container">
 
-      <input type="text" class="user-banner" value='{"background":{"src":"http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg","width":709,"height":472},"objects":[{"properties":{"text":"Text 456     asd","width":"auto","text-align":"left","color":"#ffffff","font-size":24,"font-family":"Tahoma","padding":"13px","text-shadow":"0 0 3px red","box-shadow":"0 0 13px black"},"positions":{"left":"102px","top":"70px"}},{"properties":{"text":"Text 456","width":"auto","text-align":"left","color":"#000000","font-size":14,"font-family":"Tahoma, Arial","padding":"3px","text-shadow":"0 0 0 black","box-shadow":"0 0 0 black"},"positions":{"left":"20px","top":"200px"}}]}'/>
+      <input type="text" class="user-banner" value='{"show-preview-code": false, "background":{"src":"http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg","width":709,"height":472},"objects":[{"properties":{"text":"Text 456     asd","width":"auto","text-align":"left","color":"#ffffff","font-size":44,"font-family":"Arial","padding":"15px","text-shadow":"0 0 3px red","box-shadow":"0 0 13px black"},"positions":{"left":"102px","top":"70px"}},{"properties":{"text":"Text 456","width":"auto","text-align":"left","color":"#000000","font-size":14,"font-family":"Tahoma, Arial","padding":"3px","text-shadow":"0 0 0 black","box-shadow":"0 0 0 black"},"positions":{"left":"20px","top":"200px"}}]}'/>
 
     </div><!-- /.container -->
 
@@ -35,7 +35,12 @@
 
     <script>
       $(function() {
-        var banner = $('.user-banner').generateBanner({
+        // var banner = $('.user-banner').showBanner('{"background":{"src":"http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg","width":709,"height":472},"objects":[{"properties":{"text":"Text 456     asd","width":"auto","text-align":"left","color":"#ffffff","font-size":24,"font-family":"Tahoma","padding":"13px","text-shadow":"0 0 3px red","box-shadow":"0 0 13px black"},"positions":{"left":"102px","top":"70px"}}]}');
+        var banner = $('.user-banner').showBanner();
+
+        var banner = $('.user-banner').showBannerEditor({
+          'show-preview': false,
+          'show-preview-code': false,
           'minWidth': 200,
           'minHeight': 150,
           'maxWidth': false,
@@ -63,8 +68,6 @@
         });
 
         //banner.setBackground('http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg');
-
-        //banner.getHTML();
 
         // setTimeout(function() {
         //   //var json = banner.getJSON();
