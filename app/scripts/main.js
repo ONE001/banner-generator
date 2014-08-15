@@ -88,24 +88,25 @@
     this.$$workspace = $('<div></div>');
     this.$$background = $('<img/>');
 
-    this.$$background.on('dragstart', function (event) { event.preventDefault(); } );
+    this.$$background.attr('draggable', false);
 
     this.$self.append(this.$$workspace);
     this.$$workspace.append(this.$$background);
 
-    this.setBackground = function(image) {
+    this.setBackground = function(image, callback) {
       this.$$background.prop('src', image);
 
       this.$$background.off('load').on('load', function() {
         var $this = $(this);
-
-        that.setSize($this.width(), $this.height());
 
         $this.css({
           'position': 'absolute',
           'width': '100%',
           'height': '100%',
         });
+
+        that.setSize($this[0].naturalWidth, $this[0].naturalHeight);
+        callback && callback.call(that);
       });
     };
 
@@ -169,18 +170,6 @@
           that.onResized();
         }
       };
-
-      // params.start = function() {
-      //   var $this = $(this);
-
-      //   if (that.rightBorder) {
-      //     $this.resizable('option', 'minWidth', that.rightBorder);
-      //   }
-
-      //   if (that.bottomBorder) {
-      //     $this.resizable('option', 'minHeight', that.bottomBorder);
-      //   }
-      // };
 
       this.$self.resizable(params);
     };
@@ -382,12 +371,13 @@
     });
 
     this.$$preview.css('position', 'relative');
-    this.$$background.on('dragstart', function (event) { event.preventDefault(); } );
+    this.$$background.attr('draggable', false);
 
     this.update = function(banner, textObjects) {
       this.$$preview.empty();
 
       this.$$preview.append(this.$$background);
+
       this.$$preview.width(banner.width);
       this.$$preview.height(banner.height);
       this.$$background.prop('src', banner.getBackground());
@@ -420,8 +410,8 @@
     this.events = new Events();
 
     this.options = $.extend({
-      width: 'auto',
-      height: 'auto',
+      'width': 300,
+      'height': 300,
       'show-preview': true,
       'show-preview-code': true,
     }, options);
@@ -521,11 +511,11 @@
   Basic.prototype.fill = function(obj) {
     if (obj.background) {
       if (obj.background.src) {
-        this.banner.setBackground(obj.background.src);
-      }
-
-      if (obj.background.width && obj.background.height) {
-        this.banner.setSize(obj.background.width, obj.background.height);
+        this.banner.setBackground(obj.background.src, function() {
+          if (obj.background.width && obj.background.height) {
+            this.setSize(obj.background.width, obj.background.height);
+          }
+        });
       }
     }
 
@@ -586,7 +576,11 @@
   };
 
   Basic.prototype.setBackground = function(src) {
-    this.banner.setBackground(src);
+    var that = this;
+
+    this.banner.setBackground(src, function() {
+      that.events.trigger('update');
+    });
   };
 
   Basic.prototype.getHTML = function() {
@@ -641,7 +635,7 @@
 
   // ---------------------------------
 
-  $.fn.showBanner = function(unparsed_json) {
+  $.fn.showBanner = function(unparsed_json, additional) {
     var $obj = $('<div>'),
         $this = $(this),
         options = this.val(),
@@ -650,6 +644,8 @@
     unparsed_json = unparsed_json || options;
 
     options = JSON.parse(unparsed_json);
+
+    options = $.extend(options, additional);
 
     base = new Basic(options);
 
