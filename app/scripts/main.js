@@ -509,11 +509,14 @@
   },
 
   Basic.prototype.fill = function(obj) {
+    var ev = this.events;
+
     if (obj.background) {
       if (obj.background.src) {
         this.banner.setBackground(obj.background.src, function() {
           if (obj.background.width && obj.background.height) {
             this.setSize(obj.background.width, obj.background.height);
+            ev.trigger('update');
           }
         });
       }
@@ -531,7 +534,7 @@
       });
     }
 
-    this.events.trigger('update');
+    ev.trigger('update');
   },
 
   Basic.prototype.getJSON = function() {
@@ -664,10 +667,19 @@
     return base;
   };
 
-  $.fn.showBannerEditor = function(options) {
+$.fn.showBannerEditor = function(options) {
     var $obj = $('<div>'),
         $this = $(this),
-        advanced = new Advanced(options);
+        json = this.val(),
+        advanced;
+
+    if (json) {
+      json = JSON.parse(json);
+    }
+
+    $.extend(options, json);
+
+    advanced = new Advanced(options);
 
     advanced.events.bind('update', function() {
       advanced.preview.update(advanced.banner, advanced.sm.all());
@@ -680,6 +692,8 @@
 
     $this.hide();
     $this.after($obj);
+
+    advanced.fill(options);
 
     return advanced;
   };
