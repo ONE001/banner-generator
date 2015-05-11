@@ -36,42 +36,48 @@
     <script>
       $(function() {
         // var banner = $('.user-banner').showBanner('{"background":{"src":"http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg","width":709,"height":472},"objects":[{"properties":{"text":"Text 456     asd","width":"auto","text-align":"left","color":"#ffffff","font-size":24,"font-family":"Tahoma","padding":"13px","text-shadow":"0 0 3px red","box-shadow":"0 0 13px black"},"positions":{"left":"102px","top":"70px"}}]}');
-        var banner = $('.user-banner').showBanner(null, {
-          'show-preview-code': false,
-        });
-
-        // var banner1 = $('.user-banner').showBannerEditor({
-        //   'show-preview': false,
+        // var banner = $('.user-banner').showBanner(null, {
         //   'show-preview-code': false,
-        //   'minWidth': 200,
-        //   'minHeight': 150,
-        //   'maxWidth': false,
-        //   'maxHeight': false,
-        //   'width': 500,
-        //   'height': 300,
-        //   // additional properties
-        //   'properties': {
-        //     'padding': {
-        //       'label': 'Padding',
-        //       'type': 'text',
-        //       'value': '3px',
-        //     },
-        //     'text-shadow': {
-        //       'label': 'Text-shadow',
-        //       'type': 'text',
-        //       'value': '0 0 0 black',
-        //     },
-        //     'box-shadow': {
-        //       'label': 'Box-shadow',
-        //       'type': 'text',
-        //       'value': '0 0 0 black',
-        //     },
-        //   },
         // });
 
-        banner.setBackground('http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg');
+        var banner1 = $('.user-banner').showBannerEditor({
+          'show-preview': false,
+          'show-preview-code': false,
+          'minWidth': 200,
+          'minHeight': 150,
+          'maxWidth': false,
+          'maxHeight': false,
+          'width': 500,
+          'height': 300,
+          // additional properties
+          'properties': {
+            'padding': {
+              'label': 'Padding',
+              'type': 'text',
+              'value': '3px',
+            },
+            'text-shadow': {
+              'label': 'Text-shadow',
+              'type': 'text',
+              'value': '0 0 0 black',
+            },
+            'box-shadow': {
+              'label': 'Box-shadow',
+              'type': 'text',
+              'value': '0 0 0 black',
+            },
+          },
+        });
 
-        // setTimeout(function() {
+          // banner1.setBackground('http://upload.wikimedia.org/wikipedia/commons/1/1e/Stonehenge.jpg');
+
+          banner1.events.bind('update', function() {
+              console.log(arguments);
+          });
+
+
+
+      // setTimeout(function() {
         //   //var json = banner.getJSON();
 
         //   console.log(JSON.stringify(banner.getJSON()));
